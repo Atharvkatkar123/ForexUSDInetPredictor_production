@@ -5,3 +5,4 @@ tensorflow>=2.8.0
 joblib>=1.1.0
 vaderSentiment>=3.3.2
 requests>=2.25.0
+scikit-learn>=1.0.0
