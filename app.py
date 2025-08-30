@@ -1,6 +1,3 @@
-#added date till 10 you might need to look into it
-
-
 from flask import Flask, jsonify, send_from_directory
 import threading
 import pandas as pd
@@ -14,15 +11,11 @@ import random
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import requests
 import csv
-import sys
-sys.path.append(r"C:\Users\katka\Downloads\models_forex_production\currency_model_pipeline")
+# Remove the hardcoded sys.path line
 from predictor import forecast_prices_noloop
 
-
-
-
-# Configuration
-BASE_DIR = os.path.abspath(r'C:\Users\katka\Downloads\models_forex_production')
+# Configuration - Updated to use current directory
+BASE_DIR = os.getcwd()  # Current working directory
 NEWS_CSV_PATH = os.path.join(BASE_DIR, 'news1-Copy.csv')
 BASE_URL = "https://newsapi.org/v2/everything"
 API_KEY = 'cb0e07a51f4a405590d9e324f6e3b309'
@@ -39,23 +32,22 @@ def load_custom_lexicon(file_path):
             lexicon[term] = float(score)
     return lexicon
 
-
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path='')
 
 predicted_data = []
 
+# Updated model and scaler paths
 model = load_model(os.path.join(BASE_DIR, "USD_Price_Forecst_Model_many_curr_sentiment_hb.h5"))
 scaler = joblib.load(os.path.join(BASE_DIR, "input_scaler_many_curr_setiment_hb.save"))
 target_scaler = joblib.load(os.path.join(BASE_DIR, "output_scaler_many_curr_sentiment_hb.save"))
 
-
+# Updated CSV paths
 df = pd.read_csv(os.path.join(BASE_DIR, 'USD_INR Historical Data (1).csv'))
 
 df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
 df['Change %'] = df['Change %'].str.replace('%', '').astype(float)
 
 df['Sentiment'] = 0.0
-
 
 for idx, row in df.iterrows():
     change = max(min(row['Change %'], 1), -1)
@@ -67,7 +59,6 @@ for idx, row in df.iterrows():
 analyzer = SentimentIntensityAnalyzer()
 finance_lexicon = load_custom_lexicon("finance_lexicon.txt")
 analyzer.lexicon.update(finance_lexicon)
-
 
 if not os.path.exists(NEWS_CSV_PATH):
     with open(NEWS_CSV_PATH, 'w', newline='', encoding='utf-8') as f:
@@ -115,9 +106,10 @@ rolling_df = df[['Date', 'Price', 'Change %', 'Sentiment']].copy()
 
 print(f"this is 1st rolling_df: {rolling_df.head(5)}")
 
-jpy1 = pd.read_csv(r"C:\Users\katka\Downloads\models_forex\USD_JPY Historical Data.csv")
-gbp1 = pd.read_csv(r"C:\Users\katka\Downloads\models_forex\USD_GBP Historical Data.csv")
-eur1 = pd.read_csv(r"C:\Users\katka\Downloads\models_forex\USD_EUR Historical Data (1).csv")
+# Updated currency data paths
+jpy1 = pd.read_csv(os.path.join(BASE_DIR, "USD_JPY Historical Data.csv"))
+gbp1 = pd.read_csv(os.path.join(BASE_DIR, "USD_GBP Historical Data.csv"))
+eur1 = pd.read_csv(os.path.join(BASE_DIR, "USD_EUR Historical Data (1).csv"))
 
 jpy1 = jpy1[::-1].reset_index(drop=True)
 gbp1 = gbp1[::-1].reset_index(drop=True)
@@ -165,7 +157,6 @@ def prediction_loop():
         latest_scaled = scaler.transform(latest_sequence)
         latest_scaled = np.expand_dims(latest_scaled, axis=0)
         
-        
         change_scaled = model.predict(latest_scaled)
         predicted_change = target_scaler.inverse_transform(change_scaled)[0][0]
         
@@ -178,22 +169,14 @@ def prediction_loop():
         last_pound = last_row['pound']
         last_yen = last_row['yen']
         
-        
         jpy1, change_jpy, new_price_jpy,prev_price_jpy = forecast_prices_noloop(jpy1, model_name="JPY_Price_Forecst_Model")
         gbp1, change_gbp, new_price_gbp,prev_price_gbp = forecast_prices_noloop(gbp1, model_name="GBP_Price_Forecst_Model")
         eur1, change_eur, new_price_eur,prev_price_eur = forecast_prices_noloop(eur1, model_name="EUR_Price_Forecst_Model")
-        
-        #prev_price_jpy = jpy1['Price'].iloc[-2]
-        #prev_price_gbp = gbp1['Price'].iloc[-2]
-        #prev_price_eur = eur1['Price'].iloc[-2]
-        
-        
         
         last_euro = prev_price_eur
         last_pound = prev_price_gbp
         last_yen = prev_price_jpy
 
-        
         updated_price = last_price + predicted_change
         updated_euro = new_price_eur
         updated_pound = new_price_gbp
@@ -201,7 +184,6 @@ def prediction_loop():
         
         date_str = next_date.strftime("%Y-%m-%d")
 
-        
         # Check if news exists for this date in CSV
         headlines = []
         if len(news_df) > 0 and next_date.date() in news_df['publishedAt'].values:
