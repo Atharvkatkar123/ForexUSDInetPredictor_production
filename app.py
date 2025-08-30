@@ -313,5 +313,7 @@ def prediction_loop():
         time.sleep(2)
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))  # Use PORT from environment
     threading.Thread(target=prediction_loop, daemon=True).start()
-    app.run(port=5000, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, use_reloader=False)
+
