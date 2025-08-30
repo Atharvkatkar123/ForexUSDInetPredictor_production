@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Dollar Predictor - USDINet</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #000;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      overflow-x: auto;
+    }
+
+    /* Smooth scrolling for the entire page */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* ========== SPLASH SCREEN STYLES ========== */
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      font-weight: 200;
+      background: linear-gradient(135deg, #1a1a2e, #000000, #313335);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+      animation: fadeOut 1s ease-in-out 3s forwards;
+    }
+
+    .splash-logo-gif {
+      max-width: 400px;
+      max-height: 200px;
+      width: auto;
+      height: auto;
+      animation: scaleUp 1.5s ease-out;
+      margin-bottom: 20px;
+    }
+
+    .splash-subtitle {
+      font-size: 1.3rem;
+      color: #d3d3d3;
+      animation: slideUp 1s ease-out 0.5s both;
+      letter-spacing: 1.2px;
+    }
+
+    .loading-dots {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 30px;
+      animation: slideUp 1s ease-out 1s both;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #83b3dd;
+      margin: 0 5px;
+      animation: bounce 1.5s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.3s; }
+    .dot:nth-child(3) { animation-delay: 0.6s; }
+
+    /* ========== NAVIGATION BAR STYLES ========== */
+    .navbar {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(90deg, #3c3c3c40, #1c1c1c4d);
+      backdrop-filter: blur(10px);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+      box-shadow: 0 2px 20px rgba(0, 212, 255, 0.1);
+    }
+
+    .navbar-brand {
+      font-size: 1.9rem;
+      font-weight: Regular;
+      background: linear-gradient(45deg, #eaeaea, #e4e4e4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+
+    .navbar-brand div {
+      font-size: 0.5em;
+      font-weight: 300;
+      color: #b3dcf9;
+      margin-top: 2px;
+    }
+
+    .navbar-nav {
+      display: flex;
+      list-style: none;
+      gap: 30px;
+    }
+
+    .nav-item {
+      position: relative;
+    }
+
+    .nav-link {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+
+    .nav-link:hover {
+      color: #ffffff;
+      background: rgba(159, 159, 159, 0.1);
+    }
+
+    .nav-link.active {
+      color: #00d4ff !important;
+      background: rgba(0, 212, 255, 0.2);
+    }
+
+    /* ========== MAIN CONTENT STYLES ========== */
+    .main-content {
+      opacity: 0;
+      animation: fadeInContent 1s ease-in-out 4s forwards;
+      padding: 20px 10px;
+    }
+
+    .main-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dashboard-container {
+      position: relative;
+      width: 100%;
+      max-width: 1600px;
+      min-height: 800px;
+      aspect-ratio: 16/9;
+    }
+
+    /* Base container styles with locked aspect ratios */
+    .container, .container_news, .container_min_max, .container_yet_to_decide,
+    .container1, .container2, .container3 {
+      position: absolute;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      object-fit: contain;
+      object-position: center;
+    }
+
+    /* Main chart container - maintains 556:450 aspect ratio */
+    .container {
+      left: 2%;
+      top: 5%;
+      width: 40%;
+      height: 55%;
+      aspect-ratio: 556/450;
+    }
+
+    .container_news {
+      left: 45%;
+      top: 5%;
+      width: 35%;
+      height: 43%;
+      aspect-ratio: 553/354;
+      scroll-margin-top: 80px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .container_min_max {
+      left: 45%;
+      top: 52%;
+      width: 35%;
+      height: 24%;
+      aspect-ratio: 553/199;
+    }
+
+    .container_yet_to_decide {
+      left: 83%;
+      top: 5%;
+      width: 15%;
+      height: 71%;
+      aspect-ratio: 199/560;
+    }
+
+    /* Currency section for navigation */
+    .currency-section {
+      position: absolute;
+      left: 2%;
+      top: 65%;
+      width: 40%;
+      height: 12%;
+      scroll-margin-top: 80px;
+      padding: 10px;
+      border-radius: 8px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .container1 {
+      position: absolute;
+      left: 0%;
+      top: 0%;
+      width: 30%;
+      height: 100%;
+      aspect-ratio: 167/98;
+    }
+
+    .container2 {
+      position: absolute;
+      left: 35%;
+      top: 0%;
+      width: 30%;
+      height: 100%;
+      aspect-ratio: 167/98;
+    }
+
+    .container3 {
+      position: absolute;
+      left: 70%;
+      top: 0%;
+      width: 30%;
+      height: 100%;
+      aspect-ratio: 167/98;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    #livePlot {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #volatilityBarChart {
+      position: absolute;
+      left: 12%;
+      top: 40%;
+      width: 80%;
+      height: 50%;
+      z-index: 2;
+    }
+
+    #priceDisplay {
+      position: absolute;
+      top: 28%;
+      left: 15%;
+      color: white;
+      z-index: 2;
+    }
+
+    #priceDisplay .main-price {
+      font-size: clamp(24px, 4vw, 48px);
+      font-weight: normal;
+    }
+
+    #priceDisplay .decimal-price {
+      font-size: clamp(12px, 2vw, 24px);
+    }
+
+    #changeInfo {
+      position: absolute;
+      top: 42%;
+      left: 18%;
+      font-size: clamp(12px, 2.5vw, 20px);
+      font-weight: bold;
+      z-index: 2;
+    }
+
+    #arrow {
+      position: absolute;
+      top: 43%;
+      left: 14%;
+      width: 0;
+      height: 0;
+      border-left: clamp(6px, 1vw, 12px) solid transparent;
+      border-right: clamp(6px, 1vw, 12px) solid transparent;
+      border-bottom: clamp(12px, 2vw, 24px) solid #00AF00;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease-in-out;
+      z-index: 2;
+    }
+
+    #news {
+      position: absolute;
+      top: 35%;
+      left: 18%;
+      right: 18%;
+      font-size: clamp(10px, 1.6vw, 16px);
+      color: rgb(189, 189, 189);
+      z-index: 2;
+      line-height: 1.4;
+      max-height: 50%; /* Limit height to container */
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 6; /* Allow up to 6 lines total */
+      -webkit-box-orient: vertical;
+    }
+
+
+    /* Or use fixed max-height */
+    #news {
+      /* ... existing styles ... */
+      max-height: 170px; /* Set maximum height */
+      overflow-y: hidden; /* Hide overflow */
+    }
+
+
+    #news .news-item {
+      margin-bottom: 20px;
+      font-size: clamp(10px, 1.8vw, 16px);
+      color: #E0E0E0;
+      margin-right: 1px;
+    }
+
+    #news .news-source {
+      font-size: clamp(8px, 1.2vw, 12px);
+      color: #aaa;
+      margin-left: 3px;
+    }
+
+    #min_max {
+      position: absolute;
+      top: 35%;
+      left: 18%;
+      right: 18%;
+      font-size: clamp(10px, 1.8vw, 16px);
+      color: rgb(189, 189, 189);
+      z-index: 2;
+    }
+
+    #currenecyeuro, #currenecypound, #currenecyyen {
+      position: absolute;
+      top: 45%;
+      left: 8%;
+      right: 8%;
+      color: white;
+      font-size: clamp(8px, 1.5vw, 14px);
+      z-index: 2;
+      text-align: center;
+    }
+
+    .arrow-small {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      margin-left: 3px;
+      border-left: clamp(3px, 0.6vw, 6px) solid transparent;
+      border-right: clamp(3px, 0.6vw, 6px) solid transparent;
+      border-bottom: clamp(6px, 1.2vw, 12px) solid #00FF00;
+      transform: rotate(0deg);
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(58, 58, 58, 0.9);
+      border: 1px solid hsl(0, 0%, 22%);
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: clamp(8px, 1vw, 12px);
+      display: none;
+      pointer-events: none;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+
+    .tooltip .price {
+      font-size: clamp(10px, 1.2vw, 16px);
+      color: white;
+    }
+
+    .tooltip .date {
+      color: #969696;
+    }
+
+    #volatilityTooltip {
+      position: absolute;
+      display: none;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: clamp(8px, 1vw, 12px);
+      pointer-events: none;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+
+    /* ========== ANIMATIONS ========== */
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    @keyframes fadeInContent {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleUp {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-10px);
+      }
+      60% {
+        transform: translateY(-5px);
+      }
+    }
+
+    /* ========== RESPONSIVE DESIGN ========== */
+    @media screen and (max-width: 1200px) {
+      .navbar {
+        padding: 10px 20px;
+      }
+
+      .navbar-nav {
+        gap: 15px;
+      }
+
+      .nav-link {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+      }
+
+      .dashboard-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        aspect-ratio: unset;
+      }
+
+      .container, .container_news, .container_min_max, .container_yet_to_decide,
+      .currency-section {
+        position: relative;
+        left: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        margin-bottom: 20px;
+      }
+
+      .container1, .container2, .container3 {
+        position: relative;
+        left: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        margin-bottom: 20px;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+
+      .navbar-nav {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .splash-logo-gif {
+        max-width: 250px;
+        max-height: 125px;
+      }
+
+      .splash-subtitle {
+        font-size: 1rem;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .navbar-nav {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .nav-link {
+        text-align: center;
+        width: 100%;
+      }
+
+      .splash-logo-gif {
+        max-width: 200px;
+        max-height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash-screen" id="splashScreen">
+    <img src="Loding_logo.gif" alt="USDINet Logo" class="splash-logo-gif" />
+    <div class="splash-subtitle">Forecasting redefined.</div>
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#" class="navbar-brand">USDINet <div>(rnn based model)</div></a>
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a href="#currency-section" class="nav-link active">Foreign Currency</a>
+      </li>
+      <li class="nav-item">
+        <a href="#container_news" class="nav-link">News</a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="main-wrapper">
+      <div class="dashboard-container">
+        <div class="container">
+          <div class="glow"></div>
+          <img class="background" src="side_box2.png" alt="Background Image" />
+          <canvas id="livePlot" width="556" height="434"></canvas>
+          <div id="priceDisplay"></div>
+          <div id="changeInfo"></div>
+          <div id="arrow"></div>
+          <div class="tooltip" id="tooltip">
+            <div class="price"></div>
+            <div class="date"></div>
+          </div>
+        </div>
+
+        <div class="container_news" id="container_news">
+          <img class="background" src="News_box.png" alt="Background Image" />
+          <div id="news" class="value-news-box"></div>
+        </div>
+
+        <div class="container_min_max">
+          <img class="background" src="Min_Max.png" alt="Background Image" />
+          <canvas id="volatilityBarChart" width="440" height="94"></canvas>
+          <div id="volatilityTooltip"></div>
+        </div>
+
+        <div class="container_yet_to_decide">
+          <img class="background" src="Yet_to_decided.png" alt="Background Image" />
+          <div id="min_max" class="value-box"></div>
+        </div>
+
+        <!-- Currency Section for Navigation -->
+        <div class="currency-section" id="currency-section">
+          <div class="container1">
+            <img class="background" src="Euro.png" alt="Background Image" />
+            <div id="currenecyeuro" class="value-box"></div>
+          </div>
+
+          <div class="container2">
+            <img class="background" src="Pound.png" alt="Background Image" />
+            <div id="currenecypound" class="value-box"></div>
+          </div>
+
+          <div class="container3">
+            <img class="background" src="Yen.png" alt="Background Image" />
+            <div id="currenecyyen" class="value-box"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== SPLASH SCREEN LOGIC ==========
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('splashScreen').style.display = 'none';
+      }, 4000);
+    });
+
+    // ========== ENHANCED NAVIGATION LOGIC ==========
+    function scrollToElement(elementId) {
+      const element = document.getElementById(elementId);
+      const navbar = document.querySelector('.navbar');
+      
+      if (element && navbar) {
+        const elementPosition = element.offsetTop;
+        const navbarHeight = navbar.offsetHeight;
+        const offsetPosition = elementPosition - navbarHeight - 20;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+
+        // Add highlight effect
+        element.style.transition = 'all 0.3s ease';
+        element.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5)';
+        
+        // Remove highlight after 2 seconds
+        setTimeout(() => {
+          element.style.boxShadow = 'none';
+        }, 2000);
+      }
+    }
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Remove active class from all links
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        
+        // Add active class to clicked link
+        e.target.classList.add('active');
+        
+        // Scroll to target
+        const targetId = e.target.getAttribute('href').substring(1);
+        scrollToElement(targetId);
+      });
+    });
+
+    // ========== ORIGINAL DASHBOARD LOGIC ==========
+    const canvas = document.getElementById('livePlot');
+    const ctx = canvas.getContext('2d');
+
+    const CANVAS_LOGICAL_WIDTH = 556;
+    const CANVAS_LOGICAL_HEIGHT = 434;
+
+    const x_vals = [];
+    const y_vals = [];
+    const pointData = [];
+
+    function getMousePosInCanvas(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = CANVAS_LOGICAL_WIDTH / rect.width;
+      const scaleY = CANVAS_LOGICAL_HEIGHT / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    function drawStaticPlot() {
+      ctx.clearRect(0, 0, CANVAS_LOGICAL_WIDTH, CANVAS_LOGICAL_HEIGHT);
+
+      if (x_vals.length === 0) return;
+
+      const gradient = ctx.createLinearGradient(0, 209, 0, 406);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+      gradient.addColorStop(1, 'rgba(128, 128, 128, 0)');
+
+      ctx.beginPath();
+      ctx.moveTo(x_vals[0], y_vals[0]);
+      for (let i = 1; i < x_vals.length; i++) {
+        ctx.lineTo(x_vals[i], y_vals[i]);
+      }
+      ctx.lineTo(x_vals[x_vals.length - 1], 406);
+      ctx.lineTo(x_vals[0], 406);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#ABA8A8';
+      ctx.lineWidth = 2;
+      ctx.moveTo(x_vals[0], y_vals[0]);
+      for (let i = 1; i < x_vals.length - 1; i++) {
+        ctx.lineTo(x_vals[i], y_vals[i]);
+      }
+      ctx.stroke();
+
+      for (let i = 0; i < x_vals.length - 1; i++) {
+        ctx.beginPath();
+        ctx.arc(x_vals[i], y_vals[i], 3, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ABA8A8';
+        ctx.fill();
+      }
+    }
+
+    function createArrow(status) {
+      const color = status === 'Increased' ? '#45BD79' : '#D50B0B';
+      const rotation = status === 'Increased' ? '0deg' : '180deg';
+      return `<span class="arrow-small" style="border-bottom-color: ${color}; transform: rotate(${rotation});"></span>`;
+    }
+
+    function animateLastSegment() {
+      if (x_vals.length < 2) return;
+
+      const startX = x_vals[x_vals.length - 2];
+      const startY = y_vals[y_vals.length - 2];
+      const endX = x_vals[x_vals.length - 1];
+      const endY = y_vals[y_vals.length - 1];
+
+      const duration = 300;
+      const startTime = performance.now();
+
+      function step(currentTime) {
+        const progress = Math.min((currentTime - startTime) / duration, 1);
+        const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+        const currentX = startX + (endX - startX) * eased;
+        const currentY = startY + (endY - startY) * eased;
+
+        drawStaticPlot();
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(currentX, currentY);
+        ctx.strokeStyle = '#ABA8A8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(currentX, currentY, 5.5, 0, 2 * Math.PI);
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'white';
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function drawPlot() {
+      drawStaticPlot();
+      animateLastSegment();
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/latest-price");
+        const data = await res.json();
+
+        if (data.length === 0) return;
+
+        const trimmed = data.slice(-30);
+
+        x_vals.length = 0;
+        y_vals.length = 0;
+        pointData.length = 0;
+
+        const prices = trimmed.map(d => d.price);
+        const minPrice = Math.floor(Math.min(...prices) * 2) / 2 - 0.5;
+        const maxPrice = Math.ceil(Math.max(...prices) * 2) / 2 + 0.5;
+
+        const graphWidth = 469;
+        const graphHeight = 197;
+        const xStart = 44;
+        const yStart = 209;
+        const stepX = graphWidth / (30 - 1);
+
+        trimmed.forEach((d, i) => {
+          const x = xStart + i * stepX;
+          const y = yStart + ((1 - (d.price - minPrice) / (maxPrice - minPrice)) * graphHeight);
+
+          x_vals.push(x);
+          y_vals.push(y);
+
+          pointData.push({
+            x, y,
+            date: d.date,
+            price: d.price.toFixed(2)
+          });
+        });
+
+        const volatilityData = trimmed.map(d => ({
+          date: d.date,
+          value: d.volatility_3 ?? 0
+        }));
+        drawVolatilityBarGraph(volatilityData.slice(-30));
+
+        drawPlot();
+
+        const last = trimmed[trimmed.length - 1];
+        const price = last.price;
+        const deviation = last.deviation.toFixed(2);
+        const statusText = last.status;
+
+        const euro = last.euro;
+        const deviationeuro = last.deviationeuro.toFixed(2);
+        const euro_status = last.euro_status;
+
+        const pound = last.pound;
+        const deviationpound = last.deviationpound.toFixed(2);
+        const pound_status = last.pound_status;
+
+        const yen = last.yen;
+        const deviationyen = last.deviationyen.toFixed(2);
+        const yen_status = last.yen_status;
+
+        document.getElementById('currenecyeuro').innerHTML = 
+          `€${euro.toFixed(2)} (${Math.abs(deviationeuro)}%) ${createArrow(euro_status)}`;
+
+        document.getElementById('currenecypound').innerHTML = 
+          `£${pound.toFixed(2)} (${Math.abs(deviationpound)}%) ${createArrow(pound_status)}`;
+
+        document.getElementById('currenecyyen').innerHTML = 
+          `¥${yen.toFixed(2)} (${Math.abs(deviationyen)}%) ${createArrow(yen_status)}`;
+
+        const priceParts = price.toFixed(4).split('.');
+        document.getElementById('priceDisplay').innerHTML = `
+          <span class="main-price">₹${priceParts[0]}</span>
+          <span class="decimal-price">.${priceParts[1]}</span>
+        `;
+
+        const arrow = document.getElementById('arrow');
+        arrow.style.transform = `rotate(${statusText === 'Increased' ? '0deg' : '180deg'})`;
+        arrow.style.borderBottomColor = statusText === 'Increased' ? '#D50B0B' : '#45BD79';
+
+        document.getElementById('changeInfo').innerHTML =
+          `<span style="color: ${statusText === 'Increased' ? '#D50B0B' : '#45BD79'}">${Math.abs(deviation)}%</span>`;
+
+        const headlines = last.headlines || [];
+        const newsElement = document.getElementById('news');
+        if (headlines.length === 0) {
+          newsElement.innerHTML = `<span style="color: #999;">Oops! No news for this instance.</span>`;
+        } else {
+          newsElement.innerHTML = headlines.slice(0, 3).map(item => `
+            <div class="news-item">
+              <div class="news-item-text">
+                • ${item.title}
+              </div>
+              <div class="news-source">
+                ${item.source} | ${item.time}
+              </div>
+            </div>
+          `).join('');
+        }
+
+
+        const tooltip = document.getElementById('tooltip');
+        tooltip.style.display = 'none';
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        document.getElementById('news').innerHTML = `<span style="color: #ff6b6b;">Error fetching data. Check server connection.</span>`;
+      }
+    }
+
+    canvas.addEventListener('mousemove', function (e) {
+      const pos = getMousePosInCanvas(e);
+      const mx = pos.x;
+      const my = pos.y;
+
+      let found = false;
+      for (let i = 0; i < pointData.length; i++) {
+        const pt = pointData[i];
+        const dx = mx - pt.x;
+        const dy = my - pt.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 6) {
+          const container = document.querySelector('.container');
+          const containerRect = container.getBoundingClientRect();
+          const canvasRect = canvas.getBoundingClientRect();
+
+          const scaleX = canvasRect.width / CANVAS_LOGICAL_WIDTH;
+          const scaleY = canvasRect.height / CANVAS_LOGICAL_HEIGHT;
+
+          const tooltipX = canvasRect.left - containerRect.left + pt.x * scaleX + 10;
+          const tooltipY = canvasRect.top - containerRect.top + pt.y * scaleY + 10;
+
+          const tooltip = document.getElementById('tooltip');
+          tooltip.style.left = tooltipX + 'px';
+          tooltip.style.top = tooltipY + 'px';
+          tooltip.style.display = 'block';
+          tooltip.querySelector('.price').innerText = `₹${pt.price}`;
+          tooltip.querySelector('.date').innerText = pt.date;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        const tooltip = document.getElementById('tooltip');
+        tooltip.style.display = 'none';
+      }
+    });
+
+    const volatilityCanvas = document.getElementById('volatilityBarChart');
+    const volatilityCtx = volatilityCanvas.getContext('2d');
+    let barPositions = [];
+
+    function drawVolatilityBarGraph(volData) {
+      const width = volatilityCanvas.width;
+      const height = volatilityCanvas.height;
+
+      const paddingLeft = 10;
+      const paddingRight = 10;
+      const paddingTop = 10;
+      const paddingBottom = 10;
+
+      const chartWidth = width - paddingLeft - paddingRight;
+      const chartHeight = height - paddingTop - paddingBottom;
+
+      const barCount = Math.min(volData.length, 30);
+      const barWidth = Math.floor(chartWidth / barCount) - 2;
+
+      const maxVal = Math.max(...volData.map(v => v.value)) || 1;
+
+      barPositions = [];
+      volatilityCtx.clearRect(0, 0, width, height);
+
+      volData.slice(-barCount).forEach((d, i) => {
+        const barHeight = (d.value / maxVal) * chartHeight;
+        const x = paddingLeft + i * (barWidth + 2);
+        const y = height - paddingBottom - barHeight;
+
+        volatilityCtx.fillStyle = '#9F9F9F';
+        volatilityCtx.fillRect(x, y, barWidth, barHeight);
+        barPositions.push({
+          x, y, width: barWidth, height: barHeight,
+          value: d.value.toFixed(3),
+          date: d.date
+        });
+      });
+    }
+
+    const volTooltip = document.getElementById('volatilityTooltip');
+    const containerMinMax = document.querySelector('.container_min_max');
+
+    volatilityCanvas.addEventListener('mousemove', function(e) {
+      const rect = volatilityCanvas.getBoundingClientRect();
+      const containerRect = containerMinMax.getBoundingClientRect();
+
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      let found = false;
+
+      for (let bar of barPositions) {
+        if (
+          mouseX >= bar.x &&
+          mouseX <= bar.x + bar.width &&
+          mouseY >= bar.y &&
+          mouseY <= bar.y + bar.height
+        ) {
+          const tooltipX = e.clientX - containerRect.left + 10;
+          const tooltipY = e.clientY - containerRect.top + 10;
+
+          volTooltip.style.left = `${tooltipX}px`;
+          volTooltip.style.top = `${tooltipY}px`;
+          volTooltip.innerHTML = `<strong>Volatility ${bar.value}</strong><br/>${bar.date}`;
+          volTooltip.style.display = 'block';
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        volTooltip.style.display = 'none';
+      }
+    });
+
+    // Start fetching data after splash screen
+    setTimeout(() => {
+      setInterval(fetchData, 5000);
+      fetchData();
+    }, 4500);
+  </script>
+</body>
+</html>

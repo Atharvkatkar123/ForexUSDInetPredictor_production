@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Dollar Predictor</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .container {
+      position: absolute;
+      left: 5%;
+      width: 556px;
+      height: 450px;
+    }
+    .container_news {
+      position: absolute;
+      left: 105%;
+      width: 553px;
+      height: 354px;
+    }
+
+    .container_min_max {
+      position: absolute;
+      top: 80%;
+      left: 105%;
+      width: 553px;
+      height: 199px;
+    }
+    .container_yet_to_decide {
+      position: absolute;
+      left: 210%;
+      width: 199px;
+      height: 560px;
+    }
+    .container1 {
+      position: absolute;
+      bottom: -105px; /* place below main chart */
+      left: 0;
+      width: 167px;
+      height: 98px;
+    }
+
+    .container2 {
+      position: absolute;
+      bottom: -105px;
+      left: calc(50% - 83.5px); /* center it horizontally */
+      width: 167px;
+      height: 98px;
+    }
+
+    .container3 {
+      position: absolute;
+      bottom: -105px;
+      right: 0;
+      width: 167px;
+      height: 98px;
+    }
+
+
+    .background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    .status {
+      position: absolute;
+      top: 129px;
+      left: 76px;
+      font-size: 16px;
+    }
+    #priceDisplay {
+      position: absolute;
+      top: 129px;
+      left: 76px;
+      color: white;
+    }
+    #currenecyeuro {
+      position: absolute;
+      top: 44px;
+      left: 14px;
+      color: white;
+    }
+    #currenecypound {
+      position: absolute;
+      top: 44px;
+      left: 18px;
+      color: white;
+    }
+    #currenecyyen {
+      position: absolute;
+      top: 44px;
+      left: 14px;
+      color: white;
+    }
+    #news {
+      position: absolute;
+      top: 122px;
+      left: 101px;
+      right: 98px;
+      font-size: 22px;
+      color: rgb(189, 189, 189);
+    }    
+    #min_max {
+      position: absolute;
+      top: 122px;
+      left: 101px;
+      right: 98px;
+      font-size: 22px;
+      color: rgb(189, 189, 189);
+    }
+    #volatilityBarChart {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;  /* bring canvas above image */
+    }
+   
+    #changeInfo {
+      position: absolute;
+      top: 186px;
+      left: 104px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #arrow {
+      position: absolute;
+      top: 190px;
+      left: 82px;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 19px solid #00AF00;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .arrow-small {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      margin-left: 5px;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 10px solid #00FF00; /* default green */
+      transform: rotate(0deg);
+    }
+
+    .value-box {
+      font-size: 16px;
+      font-weight: regular;
+    }
+
+    .value-news-box {
+      font-size: 12px;
+      font-weight: regular;
+      color: #E0E0E0
+    }
+    .tooltip {
+      position: absolute;
+      background: rgba(58, 58, 58, 0.53);
+      border: 1px solid hsl(0, 0%, 22%);
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-size: 10px;
+      display: none;
+      pointer-events: none;
+    }
+    .tooltip .price {
+      font-size: 16px;
+      color: white;
+    }
+    .tooltip .date {
+      color: #969696;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="glow"></div>
+  <img class="background" src="side_box2.png" alt="Background Image" />
+  <canvas id="livePlot" width="556" height="434"></canvas>
+  <div id="priceDisplay"></div>
+  <div id="changeInfo"></div>
+  <div id="arrow"></div>
+  <div class="tooltip" id="tooltip">
+    <div class="price"></div>
+    <div class="date"></div>
+  </div>
+    <div class="container_news">
+    <img class="background" src="News_box.png" alt="Background Image" />
+    <div id="news" class="value-news-box"></div>
+  </div>
+    <div class="container_yet_to_decide">
+    <img class="background" src="Yet_to_decided.png" alt="Background Image" />
+    <div id="min_max" class="value-box"></div>
+  </div>
+    <div class="container_min_max">
+  <img class="background" src="Min_Max.png" alt="Background Image" />
+  <canvas id="volatilityBarChart" width="440" height="94" style= "z-index:2 ; position: absolute; left:56px; top:79px;"></canvas>
+    <div id="volatilityTooltip" style="
+    position: absolute;
+    display: none;
+    background: rgba(0, 0, 0, 0.518);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 99;">
+    </div>
+  </div>
+  <div class="container1">
+    <img class="background" src="Euro.png" alt="Background Image" />
+    <div id="currenecyeuro" class="value-box"></div>
+  </div>
+    <div class="container2">
+    <img class="background" src="Pound.png" alt="Background Image" />
+    <div id="currenecypound" class="value-box"></div>
+  </div>
+    <div class="container3">
+    <img class="background" src="Yen.png" alt="Background Image" />
+    <div id="currenecyyen" class="value-box"></div>
+</div>
+
+<script>
+  const canvas = document.getElementById('livePlot');
+  const ctx = canvas.getContext('2d');
+
+  const x_vals = [];
+  const y_vals = [];
+  const pointData = [];
+
+  function drawStaticPlot() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- Gradient fill ---
+    const gradient = ctx.createLinearGradient(0, 209, 0, 209 + 197);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+    gradient.addColorStop(1, 'rgba(128, 128, 128, 0)');
+
+    // Path for area fill
+    ctx.beginPath();
+    ctx.moveTo(x_vals[0], y_vals[0]);
+    for (let i = 1; i < x_vals.length; i++) {
+      ctx.lineTo(x_vals[i], y_vals[i]);
+    }
+    ctx.lineTo(x_vals[x_vals.length - 1], 209 + 197);
+    ctx.lineTo(x_vals[0], 209 + 197);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Draw line except last segment
+    ctx.beginPath();
+    ctx.strokeStyle = '#ABA8A8';
+    ctx.lineWidth = 2;
+    ctx.moveTo(x_vals[0], y_vals[0]);
+    for (let i = 1; i < x_vals.length - 1; i++) {
+      ctx.lineTo(x_vals[i], y_vals[i]);
+    }
+    ctx.stroke();
+
+    // Gray points except last
+    for (let i = 0; i < x_vals.length - 1; i++) {
+      ctx.beginPath();
+      ctx.arc(x_vals[i], y_vals[i], 3, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ABA8A8';
+      ctx.fill();
+    }
+  }
+
+      // Function to create arrow HTML
+  function createArrow(status) {
+    const color = status === 'Increased' ? '#45BD79' : '#D50B0B';
+    const rotation = status === 'Increased' ? '0deg' : '180deg';
+    return `<span class="arrow-small" style="border-bottom-color: ${color}; transform: rotate(${rotation});"></span>`;
+  }
+
+  function animateLastSegment() {
+    const startX = x_vals[x_vals.length - 2];
+    const startY = y_vals[y_vals.length - 2];
+    const endX = x_vals[x_vals.length - 1];
+    const endY = y_vals[y_vals.length - 1];
+
+    const duration = 300; // milliseconds
+    const startTime = performance.now();
+
+    function step(currentTime) {
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const eased = progress < 0.5
+        ? 2 * progress * progress
+        : -1 + (4 - 2 * progress) * progress; // ease-in-out
+
+      const currentX = startX + (endX - startX) * eased;
+      const currentY = startY + (endY - startY) * eased;
+
+      // Redraw static part
+      drawStaticPlot();
+
+      // Draw animated last segment
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(currentX, currentY);
+      ctx.strokeStyle = '#ABA8A8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Active glowing dot at current point
+      ctx.beginPath();
+      ctx.arc(currentX, currentY, 5.5, 0, 2 * Math.PI);
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'white';
+      ctx.fillStyle = 'white';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  // === MAIN DRAW CALL ===
+  function drawPlot() {
+    drawStaticPlot();
+    animateLastSegment(); // animate only new segment
+  }
+
+
+
+  async function fetchData() {
+    const res = await fetch("http://127.0.0.1:5000/latest-price");
+    const data = await res.json();
+
+    if (data.length === 0) return;
+
+    const trimmed = data.slice(-30);
+
+    x_vals.length = 0;
+    y_vals.length = 0;
+    pointData.length = 0;
+
+    const prices = trimmed.map(d => d.price);
+    const minPrice = Math.floor(Math.min(...prices) * 2) / 2 - 0.5;
+    const maxPrice = Math.ceil(Math.max(...prices) * 2) / 2 + 0.5;
+
+
+  
+    const graphWidth = 469;
+    const graphHeight = 197;
+    const xStart = 44;
+    const yStart = 209;
+    const stepX = graphWidth / (30 - 1); // ✅ evenly space 30 points across 469px
+
+    trimmed.forEach((d, i) => {
+      const x = xStart + i * stepX;
+      const y = yStart + ((1 - (d.price - minPrice) / (maxPrice - minPrice)) * graphHeight);
+
+      x_vals.push(x);
+      y_vals.push(y);
+
+      pointData.push({
+        x, y,
+        date: d.date,
+        price: d.price.toFixed(2)
+      });
+
+    });
+
+      const volatilityData = trimmed.map(d => ({
+      date: d.date,
+      value: d.volatility_3 ?? 0
+  }));
+drawVolatilityBarGraph(volatilityData.slice(-30));
+
+
+    drawPlot();
+
+    const last = trimmed[trimmed.length - 1];
+    const price = last.price;
+    const deviation = last.deviation.toFixed(2);
+    const statusText = last.status;
+
+    const euro = last.euro;
+    const deviationeuro = last.deviationeuro.toFixed(2);
+    const euro_status = last.euro_status;
+
+    const pound = last.pound;
+    const deviationpound = last.deviationpound.toFixed(2);
+    const pound_status = last.pound_status;
+
+    const yen = last.yen;
+    const deviationyen = last.deviationyen.toFixed(2);
+    const yen_status = last.yen_status;
+
+    // Update innerHTMLs
+    document.getElementById('currenecyeuro').innerHTML = 
+      `€${euro.toFixed(2)} (${Math.abs(deviationeuro)}%) ${createArrow(euro_status)}`;
+
+    document.getElementById('currenecypound').innerHTML = 
+      `£${pound.toFixed(2)} (${Math.abs(deviationpound)}%) ${createArrow(pound_status)}`;
+
+    document.getElementById('currenecyyen').innerHTML = 
+      `¥${yen.toFixed(2)} (${Math.abs(deviationyen)}%) ${createArrow(yen_status)}`;
+
+
+
+    const priceParts = price.toFixed(4).split('.');
+    document.getElementById('priceDisplay').innerHTML = `
+      <span style="font-size: 40px; font-weight: normal;">₹${priceParts[0]}</span>
+      <span style="font-size: 16px;">.${priceParts[1]}</span>
+    `;
+
+    const arrow = document.getElementById('arrow');
+    arrow.style.transform = `rotate(${statusText === 'Increased' ? '0deg' : '180deg'})`;
+    arrow.style.borderBottomColor = statusText === 'Increased' ? '#D50B0B' : '#45BD79';
+
+    document.getElementById('changeInfo').innerHTML =
+      `<span style="color: ${statusText === 'Increased' ? '#D50B0B' : '#45BD79'}">${Math.abs(deviation)}%</span>`;
+
+
+    // news
+
+    const headlines = last.headlines || [];
+
+    const newsElement = document.getElementById('news');
+    if (headlines.length === 0) {
+      newsElement.innerHTML = `<span style="color: #999;">Oops! No news for this instance.</span>`;
+    } else {
+      newsElement.innerHTML = headlines.slice(0, 3).map(item => `
+        <div style="margin-bottom: 15px; font-size: 16px; color: #E0E0E0; margin-right: 14px">
+          • ${item.title}
+          <div style="font-size: 10px; color: #aaa; margin-left: 14px;">
+            ${item.source} | ${item.time}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Tooltip functionality
+    const tooltip = document.getElementById('tooltip');
+    tooltip.style.display = 'none';
+  }
+
+
+  const tooltip = document.getElementById('tooltip');
+  canvas.addEventListener('mousemove', function (e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    let found = false;
+    for (let i = 0; i < pointData.length; i++) {
+      const pt = pointData[i];
+      const dx = mx - pt.x;
+      const dy = my - pt.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 6) {
+        tooltip.style.left = `${pt.x + 10}px`;
+        tooltip.style.top = `${pt.y + 10}px`;
+        tooltip.style.display = 'block';
+        tooltip.querySelector('.price').innerText = `₹${pt.price}`;
+        tooltip.querySelector('.date').innerText = pt.date;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      tooltip.style.display = 'none';
+    }
+  });
+
+  const volatilityCanvas = document.getElementById('volatilityBarChart');
+  const volatilityCtx = volatilityCanvas.getContext('2d');
+
+  let barPositions = [];
+  function drawVolatilityBarGraph(volData) {
+    volatilityCtx.clearRect(0, 0, volatilityCanvas.width, volatilityCanvas.height);
+
+    const width = volatilityCanvas.width;
+    const height = volatilityCanvas.height;
+
+    const paddingLeft = 10;
+    const paddingRight = 10;
+    const paddingTop = 10;
+    const paddingBottom = 10;
+
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const barCount = Math.min(volData.length, 30);
+    const barWidth = Math.floor(chartWidth / barCount) - 2;
+
+    const maxVal = Math.max(...volData.map(v => v.value)) || 1;
+
+    barPositions = [];
+
+    volData.slice(-barCount).forEach((d, i) => {
+      const barHeight = (d.value / maxVal) * chartHeight;
+      const x = paddingLeft + i * (barWidth + 2);
+      const y = height - paddingBottom - barHeight;
+
+      volatilityCtx.fillStyle = '#9F9F9F';  // bright white
+      volatilityCtx.fillRect(x, y, barWidth, barHeight);
+      barPositions.push({
+        x, y, width: barWidth, height: barHeight,
+        value: d.value.toFixed(3),
+        date: d.date
+      });
+    });
+  }
+
+    const volTooltip = document.getElementById('volatilityTooltip');
+    const containerMinMax = document.querySelector('.container_min_max');
+
+    volatilityCanvas.addEventListener('mousemove', function(e) {
+      const rect = volatilityCanvas.getBoundingClientRect();
+      const containerRect = containerMinMax.getBoundingClientRect();
+
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      let found = false;
+
+      for (let bar of barPositions) {
+        if (
+          mouseX >= bar.x &&
+          mouseX <= bar.x + bar.width &&
+          mouseY >= bar.y &&
+          mouseY <= bar.y + bar.height
+        ) {
+          const tooltipX = e.clientX - containerRect.left + 10;
+          const tooltipY = e.clientY - containerRect.top + 10;
+
+          volTooltip.style.left = `${tooltipX}px`;
+          volTooltip.style.top = `${tooltipY}px`;
+          volTooltip.innerHTML = `<strong>Volatility ${bar.value}</strong><br/>${bar.date}`;
+          volTooltip.style.display = 'block';
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        volTooltip.style.display = 'none';
+      }
+    });
+
+
+
+
+  setInterval(fetchData, 5000);
+  fetchData();
+  
+</script>
+
+</body>
+</html>

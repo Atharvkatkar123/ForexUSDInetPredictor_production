@@ -1,0 +1,92 @@
+recession	-3.0
+inflation	-2.5
+interest rate hike	-2.2
+interest rate cut	2.2
+bearish	-2.5
+plunged	-2.5
+downgrade	-1.8
+default	-3.0
+debt crisis	-3.0
+weak earnings	-2.0
+fiscal deficit	-2.0
+unemployment	-2.0
+headwinds	-2.2
+volatility	-1.7
+crisis	-2.5
+plummets	-2.5
+stagflation	-3.0
+withdraw	-2.2
+stalls	-1.8
+fails miserably	-3.2
+disappointing	-2.5
+disappoints	-2.0
+hurting	-2.0
+undermining	-2.2
+weakens	-1.7
+declines	-1.8
+crushing	-2.7
+miserably	-2.5
+dangerously	-2.8
+terrible	-3.0
+concerns	-1.5
+concern	-1.5
+fails	-2.5
+bullish	2.5
+surged	2.0
+upgrade	1.8
+strong earnings	2.0
+GDP growth	1.8
+stability	2.0
+resilience	2.2
+confidence	2.0
+support	1.7
+strengthening	1.8
+brilliant	2.5
+exceptional	2.8
+magnificent	3.0
+outstanding	3.0
+wonderfully	2.7
+success	2.5
+successful	2.5
+celebrates	2.2
+thriving	2.8
+record high	2.0
+soars	2.2
+accelerates	1.8
+delighting	2.5
+boosting	2.2
+brilliantly	2.5
+hawkish	-1.8
+accommodative	1.5
+intervention	-1.2
+policy failure	-2.5
+record low	-2.0
+modestly	0.5
+modest	0.5
+moderation	1.0
+remarkable	1.8
+remarkably	1.8
+massively	2.0
+massive	2.0
+massively reduces	-1.7
+robust	1.8
+acquisition	1.2
+aggressively	-1.2
+devastating	-2.5
+improving	1.5
+improvement	1.5
+moderate	0.7
+sharp decline	-2.2
+sharp withdrawal	-2.2
+soar	2.2
+surges	2.0
+surge	2.0
+plummet	-2.5
+risk appetite	1.5
+cautious	-0.7
+cautiously	-0.7
+caution	-0.7
+exceeds expectations	2.2
+falls short	-2.0
+negatively	-1.7
+positively	1.7
